@@ -1,6 +1,8 @@
 # Python-generated files
 __pycache__/
 *.py[oc]
+.claude/
+.uv-cache/
 build/
 dist/
 wheels/
@@ -14,3 +16,8 @@ data/
 
 # MacOS Trashes
 .DS_Store
+
+# Agent Files
+AGENTS.md
+CLAUDE.md
+Srmatcher_Roadmap.html
