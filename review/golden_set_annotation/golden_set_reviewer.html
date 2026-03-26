@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Golden Set Reviewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #f3f1ea;
+      --panel: #fffdf9;
+      --panel-alt: #f8f5ee;
+      --border: #d7d0c3;
+      --text: #1f2933;
+      --muted: #66737f;
+      --accent: #0f766e;
+      --accent-soft: #dff5f2;
+      --danger-soft: #fde7e7;
+      --shadow: 0 10px 30px rgba(31, 41, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, #fef6dc 0%, transparent 28%),
+        linear-gradient(180deg, #f5f2eb 0%, #efeae0 100%);
+      min-height: 100vh;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: rgba(255, 253, 249, 0.96);
+      padding: 20px 18px;
+      overflow-y: auto;
+    }
+
+    .main {
+      padding: 22px 26px 28px;
+      overflow-y: auto;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 22px;
+      letter-spacing: 0.01em;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .controls .panel {
+      padding: 14px;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      transition: transform 0.08s ease, opacity 0.12s ease;
+    }
+
+    button:hover {
+      opacity: 0.95;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button.secondary {
+      background: #ffffff;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .field input[type="text"],
+    .field input[type="number"],
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px 12px;
+    }
+
+    .field textarea {
+      min-height: 96px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .row-list {
+      margin-top: 18px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .row-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--panel-alt);
+      cursor: pointer;
+    }
+
+    .row-item.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .row-item.done {
+      border-left: 4px solid var(--accent);
+    }
+
+    .row-item small {
+      display: block;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .summary-card {
+      padding: 14px 16px;
+    }
+
+    .summary-card strong {
+      display: block;
+      font-size: 24px;
+      margin-top: 6px;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1.05fr 0.9fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .content-card {
+      padding: 18px;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 12px;
+      margin-bottom: 14px;
+    }
+
+    .meta-item {
+      background: var(--panel-alt);
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+    }
+
+    .meta-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .text-block {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .text-block h3 {
+      font-size: 17px;
+      line-height: 1.35;
+      margin-bottom: 10px;
+    }
+
+    .text-block p {
+      margin: 0;
+      white-space: pre-wrap;
+      line-height: 1.62;
+      font-size: 14px;
+    }
+
+    .review-box {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .pill.good {
+      background: var(--accent-soft);
+      color: #0b5f58;
+    }
+
+    .pill.bad {
+      background: var(--danger-soft);
+      color: #8c2d2d;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .empty {
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      background: rgba(255, 253, 249, 0.9);
+      text-align: center;
+      color: var(--muted);
+    }
+
+    @media (max-width: 1280px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .review-box {
+        position: static;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <h1>Golden Set Reviewer</h1>
+      <p class="subtle">Load the annotation CSV, review one pair at a time, and export a reviewed XLSX when finished.</p>
+
+      <div class="controls">
+        <div class="panel">
+          <div class="field">
+            <label for="csvFile">Annotation CSV</label>
+            <input id="csvFile" type="file" accept=".csv" />
+          </div>
+          <p class="hint">Recommended file: <code>golden_set_candidates.csv</code></p>
+        </div>
+
+        <div class="panel">
+          <div class="button-row">
+            <button id="prevBtn" class="secondary" disabled>Previous</button>
+            <button id="nextBtn" class="secondary" disabled>Next</button>
+          </div>
+          <div class="field" style="margin-top: 12px;">
+            <label for="rowJump">Jump to row</label>
+            <input id="rowJump" type="number" min="1" step="1" placeholder="1" />
+          </div>
+          <div class="field" style="margin-top: 12px;">
+            <label for="groupFilter">Filter rows</label>
+            <select id="groupFilter">
+              <option value="all">All rows</option>
+              <option value="raw">Raw only</option>
+              <option value="tw36">TW36 only</option>
+              <option value="negative">Negative only</option>
+              <option value="unreviewed">Unreviewed only</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="button-row">
+            <button id="exportXlsxBtn" disabled>Export Reviewed XLSX</button>
+            <button id="exportCsvBtn" class="secondary" disabled>Export CSV Backup</button>
+          </div>
+          <p class="hint">The export name will automatically change to <code>...reviewed.xlsx</code> when possible.</p>
+        </div>
+      </div>
+
+      <div id="rowList" class="row-list"></div>
+    </aside>
+
+    <main class="main">
+      <div id="emptyState" class="empty">
+        <h2>Load the annotation CSV to begin</h2>
+        <p>After loading, you will see the grant and paper side by side, plus review controls for <code>topic_ok</code> and notes.</p>
+      </div>
+
+      <div id="workspace" style="display: none;">
+        <div class="topbar">
+          <div>
+            <h2 id="currentTitle">Current pair</h2>
+            <p id="currentMeta" class="subtle"></p>
+          </div>
+          <div class="subtle" id="fileMeta"></div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="panel summary-card">
+            <span class="subtle">Loaded rows</span>
+            <strong id="summaryTotal">0</strong>
+          </div>
+          <div class="panel summary-card">
+            <span class="subtle">Reviewed rows</span>
+            <strong id="summaryReviewed">0</strong>
+          </div>
+          <div class="panel summary-card">
+            <span class="subtle">Current filter</span>
+            <strong id="summaryFilter">all</strong>
+          </div>
+          <div class="panel summary-card">
+            <span class="subtle">Current position</span>
+            <strong id="summaryPosition">0 / 0</strong>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <section class="panel content-card">
+            <div class="card-title">Grant Side</div>
+            <div class="meta-grid" id="grantMeta"></div>
+            <div class="text-block">
+              <h3 id="grantTitle"></h3>
+              <p id="grantDescription"></p>
+            </div>
+          </section>
+
+          <section class="panel content-card">
+            <div class="card-title">arXiv Side</div>
+            <div class="meta-grid" id="arxivMeta"></div>
+            <div class="text-block">
+              <h3 id="arxivTitle"></h3>
+              <p id="arxivAbstract"></p>
+            </div>
+          </section>
+
+          <section class="panel review-box">
+            <div class="card-title">Review Controls</div>
+            <div id="pillRow" class="pill-row"></div>
+
+            <div class="field">
+              <label>Temporal Direction</label>
+              <div id="temporalStatus" class="hint"></div>
+            </div>
+
+            <div class="field" style="margin-top: 14px;">
+              <label>topic_ok</label>
+              <div class="radio-group">
+                <label><input type="radio" name="topicOk" value="" checked /> Unset</label>
+                <label><input type="radio" name="topicOk" value="1" /> 1</label>
+                <label><input type="radio" name="topicOk" value="0" /> 0</label>
+              </div>
+            </div>
+
+            <div class="field" style="margin-top: 14px;">
+              <label for="reviewNotes">review_notes</label>
+              <textarea id="reviewNotes" placeholder="Optional notes about why the pair should be kept or rejected."></textarea>
+            </div>
+
+            <div class="button-row" style="margin-top: 16px;">
+              <button id="markPrevBtn" class="secondary" disabled>Save + Previous</button>
+              <button id="markNextBtn" disabled>Save + Next</button>
+            </div>
+            <p class="hint">Progress is also cached in your browser with a file-specific key.</p>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let rows = [];
+    let filteredIndices = [];
+    let currentFilteredPosition = 0;
+    let loadedFileName = '';
+    let localCacheKey = '';
+
+    const csvFileInput = document.getElementById('csvFile');
+    const rowList = document.getElementById('rowList');
+    const emptyState = document.getElementById('emptyState');
+    const workspace = document.getElementById('workspace');
+    const currentTitle = document.getElementById('currentTitle');
+    const currentMeta = document.getElementById('currentMeta');
+    const fileMeta = document.getElementById('fileMeta');
+    const summaryTotal = document.getElementById('summaryTotal');
+    const summaryReviewed = document.getElementById('summaryReviewed');
+    const summaryFilter = document.getElementById('summaryFilter');
+    const summaryPosition = document.getElementById('summaryPosition');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const markPrevBtn = document.getElementById('markPrevBtn');
+    const markNextBtn = document.getElementById('markNextBtn');
+    const exportXlsxBtn = document.getElementById('exportXlsxBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const rowJump = document.getElementById('rowJump');
+    const groupFilter = document.getElementById('groupFilter');
+    const grantMeta = document.getElementById('grantMeta');
+    const arxivMeta = document.getElementById('arxivMeta');
+    const grantTitle = document.getElementById('grantTitle');
+    const grantDescription = document.getElementById('grantDescription');
+    const arxivTitle = document.getElementById('arxivTitle');
+    const arxivAbstract = document.getElementById('arxivAbstract');
+    const pillRow = document.getElementById('pillRow');
+    const temporalStatus = document.getElementById('temporalStatus');
+    const reviewNotes = document.getElementById('reviewNotes');
+
+    const safeValue = (value, fallback = '—') => {
+      if (value === null || value === undefined || value === '' || value === 'NaN') {
+        return fallback;
+      }
+      return String(value);
+    };
+
+    function buildCacheKey(fileName) {
+      return `golden-set-reviewer::${fileName}`;
+    }
+
+    function reviewedCount() {
+      return rows.filter((row) => row.topic_ok === '0' || row.topic_ok === '1').length;
+    }
+
+    function getCurrentRow() {
+      if (!filteredIndices.length) return null;
+      const actualIndex = filteredIndices[currentFilteredPosition];
+      return rows[actualIndex];
+    }
+
+    function saveLocalCache() {
+      if (!localCacheKey || !rows.length) return;
+      localStorage.setItem(localCacheKey, JSON.stringify(rows));
+    }
+
+    function tryLoadLocalCache(fileName) {
+      const key = buildCacheKey(fileName);
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+
+    function updateSummary() {
+      summaryTotal.textContent = rows.length;
+      summaryReviewed.textContent = reviewedCount();
+      summaryFilter.textContent = groupFilter.value;
+      summaryPosition.textContent = filteredIndices.length
+        ? `${currentFilteredPosition + 1} / ${filteredIndices.length}`
+        : '0 / 0';
+    }
+
+    function createMetaItem(label, value) {
+      const div = document.createElement('div');
+      div.className = 'meta-item';
+      div.innerHTML = `<span>${label}</span><strong>${safeValue(value)}</strong>`;
+      return div;
+    }
+
+    function renderPills(row) {
+      pillRow.innerHTML = '';
+      const pills = [
+        { text: `annotation_id: ${row.annotation_id}` },
+        { text: `source_group: ${row.source_group}` },
+        { text: `domain_pair: ${row.domain_pair}` },
+        { text: `grant_year: ${row.grant_year}` },
+        { text: `similarity_band: ${safeValue(row.similarity_band)}` },
+      ];
+
+      pills.forEach((pill) => {
+        const div = document.createElement('div');
+        div.className = 'pill';
+        div.textContent = pill.text;
+        pillRow.appendChild(div);
+      });
+
+      const temporalPill = document.createElement('div');
+      temporalPill.className = `pill ${row.temporal_ok === '1' ? 'good' : 'bad'}`;
+      temporalPill.textContent = `temporal_ok: ${row.temporal_ok}`;
+      pillRow.appendChild(temporalPill);
+
+      if (row.topic_ok === '1' || row.topic_ok === '0') {
+        const topicPill = document.createElement('div');
+        topicPill.className = `pill ${row.topic_ok === '1' ? 'good' : 'bad'}`;
+        topicPill.textContent = `topic_ok: ${row.topic_ok}`;
+        pillRow.appendChild(topicPill);
+      }
+    }
+
+    function renderCurrentRow() {
+      const row = getCurrentRow();
+      if (!row) {
+        currentTitle.textContent = 'No row available under current filter';
+        currentMeta.textContent = '';
+        grantMeta.innerHTML = '';
+        arxivMeta.innerHTML = '';
+        grantTitle.textContent = '';
+        grantDescription.textContent = '';
+        arxivTitle.textContent = '';
+        arxivAbstract.textContent = '';
+        pillRow.innerHTML = '';
+        temporalStatus.textContent = '';
+        updateSummary();
+        renderRowList();
+        return;
+      }
+
+      currentTitle.textContent = `${row.annotation_id} · ${row.source_group.toUpperCase()}`;
+      currentMeta.textContent = `${safeValue(row.domain_pair)} | grant ${safeValue(row.grant_id)} | arXiv ${safeValue(row.arxiv_id)}`;
+
+      grantMeta.innerHTML = '';
+      grantMeta.appendChild(createMetaItem('Grant domain', row.grant_domain));
+      grantMeta.appendChild(createMetaItem('Grant year', row.grant_year));
+      grantMeta.appendChild(createMetaItem('Grant posted date', row.grant_posted_date));
+      grantMeta.appendChild(createMetaItem('Delta t (days)', row.delta_t_days));
+
+      arxivMeta.innerHTML = '';
+      arxivMeta.appendChild(createMetaItem('arXiv domain', row.arxiv_domain));
+      arxivMeta.appendChild(createMetaItem('Submitted date', row.arxiv_submitted_date));
+      arxivMeta.appendChild(createMetaItem('Similarity', row.similarity));
+      arxivMeta.appendChild(createMetaItem('Year segment', row.year_segment));
+
+      grantTitle.textContent = safeValue(row.grant_title, '');
+      grantDescription.textContent = safeValue(row.grant_description, '');
+      arxivTitle.textContent = safeValue(row.arxiv_title, '');
+      arxivAbstract.textContent = safeValue(row.arxiv_abstract, '');
+
+      renderPills(row);
+      temporalStatus.textContent = row.temporal_ok === '1'
+        ? 'Prefilled as 1 because delta_t_days > 0.'
+        : 'Prefilled as 0 because delta_t_days <= 0.';
+
+      const radio = document.querySelector(`input[name="topicOk"][value="${row.topic_ok ?? ''}"]`) ||
+        document.querySelector('input[name="topicOk"][value=""]');
+      if (radio) radio.checked = true;
+      reviewNotes.value = row.review_notes || '';
+
+      prevBtn.disabled = currentFilteredPosition === 0;
+      nextBtn.disabled = currentFilteredPosition >= filteredIndices.length - 1;
+      markPrevBtn.disabled = prevBtn.disabled;
+      markNextBtn.disabled = rows.length === 0;
+      updateSummary();
+      renderRowList();
+    }
+
+    function renderRowList() {
+      rowList.innerHTML = '';
+      filteredIndices.forEach((actualIndex, filteredPosition) => {
+        const row = rows[actualIndex];
+        const div = document.createElement('div');
+        div.className = 'row-item';
+        if (filteredPosition === currentFilteredPosition) div.classList.add('active');
+        if (row.topic_ok === '0' || row.topic_ok === '1') div.classList.add('done');
+        div.innerHTML = `
+          <strong>${safeValue(row.annotation_id)}</strong>
+          <small>${safeValue(row.source_group)} | ${safeValue(row.domain_pair)}</small>
+          <small>${safeValue(row.grant_year)} | topic_ok=${safeValue(row.topic_ok, 'unset')}</small>
+        `;
+        div.addEventListener('click', () => {
+          persistCurrentInputs();
+          currentFilteredPosition = filteredPosition;
+          renderCurrentRow();
+        });
+        rowList.appendChild(div);
+      });
+    }
+
+    function persistCurrentInputs() {
+      const row = getCurrentRow();
+      if (!row) return;
+      const selected = document.querySelector('input[name="topicOk"]:checked');
+      row.topic_ok = selected ? selected.value : '';
+      row.review_notes = reviewNotes.value || '';
+      saveLocalCache();
+    }
+
+    function applyFilter() {
+      const value = groupFilter.value;
+      filteredIndices = rows
+        .map((row, idx) => ({ row, idx }))
+        .filter(({ row }) => {
+          if (value === 'all') return true;
+          if (value === 'unreviewed') return !(row.topic_ok === '0' || row.topic_ok === '1');
+          return row.source_group === value;
+        })
+        .map(({ idx }) => idx);
+
+      if (!filteredIndices.length) {
+        currentFilteredPosition = 0;
+      } else if (currentFilteredPosition >= filteredIndices.length) {
+        currentFilteredPosition = 0;
+      }
+      renderCurrentRow();
+    }
+
+    function move(delta) {
+      persistCurrentInputs();
+      if (!filteredIndices.length) return;
+      currentFilteredPosition = Math.max(0, Math.min(filteredIndices.length - 1, currentFilteredPosition + delta));
+      renderCurrentRow();
+    }
+
+    function renameReviewed(fileName, extension) {
+      const lower = fileName.toLowerCase();
+      const base = fileName.replace(/\.[^.]+$/, '');
+      if (lower.includes('review')) {
+        return `${base.replace(/review/ig, 'reviewed')}.${extension}`;
+      }
+      return `${base}_reviewed.${extension}`;
+    }
+
+    function exportWorkbook(asXlsx) {
+      persistCurrentInputs();
+      const exportRows = rows.map((row) => ({
+        ...row,
+        topic_ok: row.topic_ok ?? '',
+        review_notes: row.review_notes ?? '',
+      }));
+      const worksheet = XLSX.utils.json_to_sheet(exportRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'golden_set_review');
+      const defaultBase = loadedFileName || 'golden_set_candidates.csv';
+      const outputName = renameReviewed(defaultBase, asXlsx ? 'xlsx' : 'csv');
+
+      if (asXlsx) {
+        XLSX.writeFile(workbook, outputName);
+      } else {
+        const csv = XLSX.utils.sheet_to_csv(worksheet);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = outputName;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    function loadRows(parsedRows, fileName) {
+      rows = parsedRows.map((row) => ({
+        ...row,
+        topic_ok: row.topic_ok === undefined || row.topic_ok === null ? '' : String(row.topic_ok),
+        review_notes: row.review_notes || '',
+        temporal_ok: row.temporal_ok === undefined ? '' : String(row.temporal_ok),
+      }));
+
+      loadedFileName = fileName;
+      localCacheKey = buildCacheKey(fileName);
+      const cache = tryLoadLocalCache(fileName);
+      if (cache && Array.isArray(cache) && cache.length === rows.length) {
+        rows = cache;
+      }
+
+      emptyState.style.display = 'none';
+      workspace.style.display = 'block';
+      exportXlsxBtn.disabled = false;
+      exportCsvBtn.disabled = false;
+      fileMeta.textContent = `Loaded file: ${fileName}`;
+      currentFilteredPosition = 0;
+      applyFilter();
+    }
+
+    csvFileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          loadRows(results.data, file.name);
+        },
+      });
+    });
+
+    prevBtn.addEventListener('click', () => move(-1));
+    nextBtn.addEventListener('click', () => move(1));
+    markPrevBtn.addEventListener('click', () => move(-1));
+    markNextBtn.addEventListener('click', () => move(1));
+    exportXlsxBtn.addEventListener('click', () => exportWorkbook(true));
+    exportCsvBtn.addEventListener('click', () => exportWorkbook(false));
+
+    groupFilter.addEventListener('change', () => {
+      persistCurrentInputs();
+      applyFilter();
+    });
+
+    rowJump.addEventListener('change', () => {
+      const target = Number(rowJump.value);
+      if (!Number.isFinite(target) || target < 1 || target > filteredIndices.length) return;
+      persistCurrentInputs();
+      currentFilteredPosition = target - 1;
+      renderCurrentRow();
+    });
+
+    document.querySelectorAll('input[name="topicOk"]').forEach((input) => {
+      input.addEventListener('change', () => {
+        persistCurrentInputs();
+        updateSummary();
+        renderRowList();
+      });
+    });
+
+    reviewNotes.addEventListener('input', () => {
+      persistCurrentInputs();
+      renderRowList();
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (!rows.length) return;
+      if (event.key === 'ArrowLeft') move(-1);
+      if (event.key === 'ArrowRight') move(1);
+    });
+  </script>
+</body>
+</html>

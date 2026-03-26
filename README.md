@@ -72,11 +72,22 @@ SRMatcher is a graduation-paper project for building a complete pipeline for tex
   - `cs`: top-1 average similarity `0.2059`, top-1 temporal coherence `22.97%`, median top-1 lag `-1467.0` days;
   - `env_energy`: top-1 average similarity `0.1698`, top-1 temporal coherence `29.63%`, median top-1 lag `-1242.0` days.
 - The current baseline is therefore usable as a retrieval starting point, but not yet suitable as direct evidence for temporal-lag interpretation because most top-1 matches still place arXiv later than grant posting dates.
+- A first conservative side-specific stopword ablation has now also been tested:
+  - results are materialized in `tfidf_baseline_matches_stopwords_v1`, `tfidf_baseline_domain_summary_stopwords_v1`, and `tfidf_baseline_review_delta_stopwords_v1`;
+  - the tuned run produced essentially no measurable gain over the raw baseline and did not repair the reviewed human-rejected top-1 cases.
+- Layer 1 candidate-pool ablation has now been completed:
+  - `tfidf_baseline_layer1_ablation`, `tfidf_baseline_layer1_comparison`, and `tfidf_baseline_layer1_review_summary` are materialized in DuckDB;
+  - language filtering was confirmed as a cleanup-only move, not a meaningful optimization;
+  - all three tested time windows (`12m`, `24m`, `36m`) force `100%` top-1 temporal coherence with full coverage, but they reduce top-1 similarity by `0.0380` to `0.0614`;
+  - `36m` is the least damaging time-window variant and is the right representative if time-window review continues;
+  - duplicate-candidate control with `K=5` is only clearly useful in `cs`, where top-1 temporal coherence improves from `22.97%` to `26.87%`, while coverage falls to `90.74%`.
+- A new review packet is available for the next human decision:
+  - `review/Layer1 Candidate Pool Review/layer1_candidate_pool_review.csv`
+  - `review/Layer1 Candidate Pool Review/layer1_candidate_pool_review.md`
 
 ## Immediate Execution Path
 
-1. Use `tfidf_baseline_matches_raw` to perform error analysis on high-scoring pairs, especially the large share of temporally inverted top-1 matches.
-2. Convert the current side-specific candidate terms into a first controlled custom stopword list and compare it against the raw-text baseline.
-3. Only after the stopword ablation is stable, move on to temporal candidate-window constraints such as `0/6/12/18` month retrieval.
-4. Move to `match` to compare embedding-based matching against the accepted TF-IDF baseline.
-5. Move the full lag-analysis pipeline to `analysis` once the preferred matcher is selected.
+1. Use `review/Layer1 Candidate Pool Review/` to decide whether `tw36`, `dupK5`, or a combined candidate-pool rule should become the Layer 2 substrate.
+2. Treat language filtering as cleanup, not as the next baseline row to optimize further.
+3. Only after the Layer 1 substrate is chosen, start Layer 2 with field-combination tuning.
+4. Do not branch to `match` until the full baseline exit gate is satisfied.
