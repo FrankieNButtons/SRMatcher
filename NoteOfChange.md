@@ -10,6 +10,21 @@ This file records substantive project edits, their purpose, and their observed r
 
 ## Entries
 
+### 2026-03-26 - Recorded Match-Branch Readiness in Project Instructions
+
+- Purpose: preserve the project-level instruction change that formally repositions the repository from a completed `baseline` branch to a not-yet-opened but ready-to-start `match` branch.
+- Change:
+  - recorded that `AGENTS.md` and `CLAUDE.md` were updated to show:
+    - all baseline exit conditions satisfied,
+    - statistical verification completed,
+    - `match` not yet opened and waiting for Frankie's authorization from the baseline tip;
+  - recorded that both instruction files now reference `srmatcher_match_roadmap.svg` as the visual roadmap for the `match` branch;
+  - recorded that both instruction files now reserve notebook Section `19` as the first `match`-branch section unless that section number is already present in `code.ipynb`.
+- Result:
+  - the instruction-level branch state change is now logged in project memory instead of existing only inside `AGENTS.md` and `CLAUDE.md`;
+  - future agents can recover why the repository is considered baseline-complete but still branch-frozen pending Frankie's explicit authorization;
+  - the first `match`-branch notebook step is now explicitly anchored to Section `19` and the embedding baseline plan.
+
 ### 2026-03-26 - Deliberately Skipped Layer 2 Text-Representation Tuning
 
 - Purpose: document the deliberate decision to skip Layer 2 before entering the `match` branch.

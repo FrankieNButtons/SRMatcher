@@ -130,23 +130,24 @@ Therefore:
 
 ## Status Board
 
-Update this section when branch scope changes or when a major stage is completed.
-
 - Current expected branch: `match`
-- Current stage: baseline 分支所有退出条件已满足并通过统计验证。
-  已完成：EDA、pilot 切片、TF-IDF baseline、Layer 1 Final、
-  Δt 基准锁定（主分布 + dup 分离）、年度趋势、统计检验、
-  golden set 标注与评估（Precision@10 = 90%）。
-  下一步：Frankie 授权后从当前 baseline tip 开 match 分支，
-  第一个任务是 sentence-BERT embedding baseline，
-  继承 Layer 1 候选池规则，与 TF-IDF 做直接对比，
-  重点观察 dup 比例变化和 Δt 主分布改善。
+- Current stage: All baseline branch exit conditions have been satisfied and
+  verified with statistical tests. The match branch has not yet been opened.
+  Waiting for Frankie's explicit authorization to create the branch from the
+  baseline tip.
+  First task after branch creation: Section 19, embedding baseline.
+  Inherit the tfidf_baseline_layer1_final candidate pool rules.
+  Compare directly against TF-IDF baseline. Primary observations:
+  whether dup % decreases and whether the main Δt distribution improves.
+  Next notebook section number is 19.
 - `baseline` status: complete
-- `match` status: ready to start
+- `match` status: not yet opened — waiting for Frankie to create branch
+  from baseline tip
 - `analysis` status: not started
-- Branch transition rule: 从 baseline tip 开 match 分支，
-  不要从 main 开；match 完成后从 match tip 开 analysis。
-- Backtracking rule: 如需回退，先在 NoteOfChange.md 记录原因。
+- Branch transition rule: open match branch from baseline tip, not from main;
+  open analysis branch from match tip after match is complete.
+- Backtracking rule: if regression is needed, record the reason in
+  NoteOfChange.md before doing anything.
 
 ## Current Project Context
 
@@ -157,6 +158,13 @@ Update this section when branch scope changes or when a major stage is completed
 3. `main.py` currently builds cleaned `grant_clean` and `arxiv_clean` tables.
 4. `code.ipynb` currently covers Phase-1 EDA, pilot-domain review, side-specific stopword-candidate diagnosis, the raw-text domain-wise TF-IDF baseline, and the full Layer 1 candidate-pool ablation.
 5. `srmatcher_baseline_roadmap.svg` is an available visual roadmap for baseline-stage sequencing and exit criteria.
+6. `srmatcher_match_roadmap.svg` is the visual roadmap for the match branch.
+   It covers five phases: Phase A (embedding baseline, Section 19),
+   Phase B (ablation experiments, Section 20), Phase C (golden set expansion,
+   Section 21), Phase D (skill-aware hybrid, Section 22), and Phase E
+   (handoff to analysis branch). If this SVG and the written rules in this
+   file disagree, always follow the written rules and note the mismatch
+   explicitly.
 
 ## Execution Preference
 
@@ -173,3 +181,6 @@ Update this section when branch scope changes or when a major stage is completed
 5. On `baseline`, always frame the next experiment as the next row of the ablation table rather than as an isolated tweak.
 6. On notebook work, prefer adding a new section that reuses existing tables and earlier notebook context rather than replacing existing notebook structure.
 7. If the SVG roadmap and the written rules disagree, follow the written rules and note the mismatch explicitly.
+8. The next notebook section number is 19. Do not use any other number for
+   the first match-branch section unless you have first read code.ipynb and
+   confirmed that Section 19 already exists.
